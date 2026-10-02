@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ResolveAI Support Agent</title>
+  <meta name="description" content="ResolveAI: a tool-using customer support agent with routing, policy guardrails and human-in-the-loop approval. The complete workflow.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="container nav">
+      <a class="brand" href="../index.html">srinjan<span>.</span>ghosh</a>
+      <ul class="nav-links">
+        <li><a href="../index.html#projects">Projects</a></li>
+        <li class="hide-sm"><a href="research-agent.html">DeepScout</a></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">☾</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="project-hero">
+      <div class="container">
+        <div class="breadcrumb"><a href="../index.html#projects">Projects</a> / ResolveAI</div>
+        <div class="eyebrow">Agentic application 02 · Tool use + human-in-the-loop</div>
+        <h1>🎧 ResolveAI: Customer Support Agent</h1>
+        <p class="lead">
+          ResolveAI handles e-commerce support tickets end to end. It identifies the customer, classifies the issue,
+          routes it, calls real back-office tools to investigate and act, checks every action against company
+          policy, pauses for human approval when the stakes are high, and replies in the brand's voice.
+        </p>
+        <div class="tags">
+          <span class="tag">Routing</span>
+          <span class="tag">Function calling</span>
+          <span class="tag">Policy engine</span>
+          <span class="tag">Human-in-the-loop</span>
+          <span class="tag">TypeScript</span>
+        </div>
+        <dl class="meta-grid">
+          <div><dt>Pattern</dt><dd>Router + tool-use agent + HITL</dd></div>
+          <div><dt>Channels</dt><dd>Chat, email</dd></div>
+          <div><dt>Tools</dt><dd>7</dd></div>
+          <div><dt>Input → Output</dt><dd>Ticket → resolved ticket</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="layout">
+        <aside class="toc" aria-label="On this page">
+          <ol>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#tools">Tools</a></li>
+            <li><a href="#policy">Policy rules</a></li>
+            <li><a href="#run">Sample run</a></li>
+            <li><a href="#guardrails">Guardrails &amp; evals</a></li>
+            <li><a href="#stack">Tech stack</a></li>
+          </ol>
+        </aside>
+
+        <div class="content">
+          <!-- ===================== OVERVIEW ===================== -->
+          <section id="overview">
+            <h2>Overview</h2>
+            <p>
+              Most support tickets are repetitive ("Where is my order?", "This arrived broken", "How do I return
+              this?") but resolving them still means clicking through several internal systems. A plain chatbot can
+              answer FAQs, but it can't <em>do</em> anything. ResolveAI is an agent: it has access to the
+              order system, shipping tracker, knowledge base and refund API, so it can actually resolve the ticket.
+            </p>
+            <p>
+              Because it can take actions that cost money, the design centers on <strong>control</strong>: a
+              deterministic policy engine sits between the agent and every write action, and anything outside
+              policy goes to a human with the agent's reasoning and a pre-filled decision.
+            </p>
+            <div class="two-col">
+              <div class="card">
+                <h3>Problem</h3>
+                <ul>
+                  <li>Agents spend most of their time on routine, multi-system lookups</li>
+                  <li>Customers wait hours for answers that take seconds to find</li>
+                  <li>Fully automated refunds without controls are a fraud and cost risk</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>What ResolveAI does</h3>
+                <ul>
+                  <li>Resolves routine tickets end to end, in minutes</li>
+                  <li>Takes real actions: refunds, replacements, return labels</li>
+                  <li>Enforces policy in code, not just in the prompt</li>
+                  <li>Hands off to humans with full context when needed</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== ARCHITECTURE ===================== -->
+          <section id="architecture">
+            <h2>Architecture</h2>
+            <p class="muted">Click any node to jump to that step in the workflow.</p>
+
+            <div class="flow" role="group" aria-label="ResolveAI architecture diagram">
+              <div class="flow-row">
+                <button class="flow-node" data-step="r1"><span class="n-num">01</span><span class="n-title">Intake &amp; Identify</span><span class="n-sub">Redact PII · lookup_customer</span></button>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-row">
+                <button class="flow-node" data-step="r2"><span class="n-num">02</span><span class="n-title">Triage</span><span class="n-sub">Intent · urgency · sentiment</span></button>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-row">
+                <button class="flow-node decision" data-step="r3"><span class="n-num">03</span><span class="n-title">Route</span><span class="n-sub">Which path?</span></button>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-row">
+                <button class="flow-node" data-step="r4"><span class="n-title">FAQ path</span><span class="n-sub">search_kb → answer</span></button>
+                <button class="flow-node tool" data-step="r4"><span class="n-num">04</span><span class="n-title">Order-issue agent</span><span class="n-sub">get_order · track_shipment · search_kb</span></button>
+                <button class="flow-node human" data-step="r3"><span class="n-title">Direct to human</span><span class="n-sub">Legal · chargeback · VIP</span></button>
+              </div>
+              <div class="flow-arrow">↓ proposed action</div>
+              <div class="flow-row">
+                <button class="flow-node decision" data-step="r5"><span class="n-num">05</span><span class="n-title">Policy Check</span><span class="n-sub">allow · needs approval · deny</span></button>
+              </div>
+              <div class="flow-arrow">↓ needs approval</div>
+              <div class="flow-row">
+                <button class="flow-node human" data-step="r6"><span class="n-num">06</span><span class="n-title">Human Approval</span><span class="n-sub">approve · edit · reject</span></button>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-row">
+                <button class="flow-node" data-step="r7"><span class="n-num">07</span><span class="n-title">Act, Reply &amp; Close</span><span class="n-sub">Execute · respond · log</span></button>
+              </div>
+              <div class="legend">
+                <span class="l-llm">LLM step</span>
+                <span class="l-tool">Tool-using agent</span>
+                <span class="l-decision">Decision / rules</span>
+                <span class="l-human">Human checkpoint</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== WORKFLOW ===================== -->
+          <section id="workflow">
+            <h2>Complete workflow</h2>
+            <p class="muted">Seven steps from incoming ticket to resolution. Read actions run freely; write actions always go through the policy engine.</p>
+
+            <ol class="steps">
+              <!-- STEP 1 -->
+              <li class="step" id="r1">
+                <div class="step-card">
+                  <div class="step-head"><h3>Intake &amp; identify the customer</h3><span class="badge tool">Tool · Deterministic</span></div>
+                  <p>
+                    A ticket arrives from chat or email. Before any LLM sees it, card numbers and other sensitive
+                    data are <strong>redacted</strong>. The sender's email or session is matched to a customer with
+                    <code>lookup_customer</code>, which loads their profile, tier, recent orders and ticket history.
+                    If there's an existing open ticket on the same topic, the new message is threaded into it.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Raw message, channel, sender identity</div>
+                    <div><strong>Output</strong>Redacted message + <code>CustomerContext</code></div>
+                  </div>
+                </div>
+              </li>
+
+              <!-- STEP 2 -->
+              <li class="step" id="r2">
+                <div class="step-card">
+                  <div class="step-head"><h3>Triage &amp; classify</h3><span class="badge">LLM · Structured output</span></div>
+                  <p>
+                    A fast model classifies the ticket into a strict schema: intent, extracted entities (order IDs,
+                    product names), urgency, sentiment, and whether it mentions anything high-risk like legal
+                    action, chargebacks or safety. Structured output makes the next step deterministic and easy to
+                    test.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Redacted message + customer context</div>
+                    <div><strong>Output</strong><code>Triage</code> JSON</div>
+                  </div>
+                  <details>
+                    <summary>Triage schema</summary>
+                    <div><pre><code>const Triage = z.object({
+  intent: z.enum([
+    "order_status", "damaged_item", "wrong_item", "return_request",
+    "refund_status", "billing", "product_question", "account", "other",
+  ]),
+  entities: z.object({
+    order_ids: z.array(z.string()),
+    products: z.array(z.string()),
+  }),
+  urgency: z.enum(["low", "normal", "high"]),
+  sentiment: z.enum(["positive", "neutral", "frustrated", "angry"]),
+  risk_flags: z.array(z.enum(["legal", "chargeback", "safety", "fraud_signal"])),
+  confidence: z.number().min(0).max(1),
+});</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 3 -->
+              <li class="step" id="r3">
+                <div class="step-card">
+                  <div class="step-head"><h3>Route</h3><span class="badge decision">Decision · Rules</span></div>
+                  <p>
+                    Plain code, not the LLM, picks the path based on the triage result. Simple questions go to a
+                    lightweight <strong>FAQ path</strong> (knowledge-base answer only, no write tools). Order
+                    problems go to the <strong>order-issue agent</strong>. Anything with a risk flag, low triage
+                    confidence or a VIP angry customer goes <strong>straight to a human</strong>, with the triage
+                    summary attached.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong><code>Triage</code>, <code>CustomerContext</code></div>
+                    <div><strong>Output</strong>Route: <code>faq</code> · <code>order_agent</code> · <code>human</code></div>
+                  </div>
+                  <details>
+                    <summary>Router</summary>
+                    <div><pre><code>function route(t: Triage, c: CustomerContext): Route {
+  if (t.risk_flags.length > 0) return "human";
+  if (t.confidence < 0.7) return "human";
+  if (c.tier === "vip" && t.sentiment === "angry") return "human";
+  if (["product_question", "account"].includes(t.intent)) return "faq";
+  return "order_agent";
+}</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 4 -->
+              <li class="step" id="r4">
+                <div class="step-card">
+                  <div class="step-head"><h3>Investigate &amp; propose an action</h3><span class="badge tool">Tool use · Order agent</span></div>
+                  <p>
+                    The order-issue agent runs a tool loop. It pulls the order, checks shipment tracking, searches
+                    the knowledge base for the relevant policy article, and builds a picture of what happened. It
+                    can call read tools freely. When it decides on a fix (refund, replacement, return label, or
+                    just an explanation) it doesn't execute it directly: it emits a <strong>proposed action</strong>
+                    with a written justification.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Ticket, triage, customer context</div>
+                    <div><strong>Output</strong><code>ProposedAction</code> + evidence + draft reply</div>
+                  </div>
+                  <details>
+                    <summary>Agent system prompt (excerpt)</summary>
+                    <div><pre><code>You are ResolveAI, a support agent for {brand}.
+Goal: resolve the customer's issue in as few back-and-forth messages as possible.
+- Always look up the order before making any claim about it.
+- Cite the knowledge-base article that justifies any action you propose.
+- Write actions (refund, replacement, return label) are PROPOSALS. Call
+  propose_action; a policy engine and possibly a human will decide.
+- Never promise an outcome before the action is approved.
+- If information is missing, ask the customer one specific question.</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 5 -->
+              <li class="step" id="r5">
+                <div class="step-card">
+                  <div class="step-head"><h3>Policy check</h3><span class="badge guard">Guardrail · Deterministic</span></div>
+                  <p>
+                    Every proposed write action is evaluated by a <strong>rules engine in code</strong> (see
+                    <a href="#policy">policy rules</a>). It returns one of three outcomes: <code>allow</code>
+                    (execute automatically), <code>needs_approval</code> (send to a human) or <code>deny</code>
+                    (the agent must choose a different path and explain it). Putting this in code means a cleverly
+                    worded message or a prompt injection can't talk the agent into a refund it isn't allowed to give.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong><code>ProposedAction</code>, order, customer history</div>
+                    <div><strong>Output</strong><code>allow</code> · <code>needs_approval</code> · <code>deny</code> + reasons</div>
+                  </div>
+                </div>
+              </li>
+
+              <!-- STEP 6 -->
+              <li class="step" id="r6">
+                <div class="step-card">
+                  <div class="step-head"><h3>Human approval</h3><span class="badge human">Human-in-the-loop</span></div>
+                  <p>
+                    For <code>needs_approval</code>, the agent's run is <strong>paused and persisted</strong>. A
+                    support lead sees a card in their queue: customer summary, what happened, the evidence (order,
+                    tracking, photos), the proposed action, the policy rule that triggered review, and the draft
+                    reply. They can approve, edit the amount or reply, or reject with a note. The agent then resumes
+                    exactly where it stopped.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Approval card</div>
+                    <div><strong>Output</strong>Decision (+ edits / note), reviewer ID, timestamp</div>
+                  </div>
+                  <details>
+                    <summary>Pause &amp; resume</summary>
+                    <div><pre><code>if (decision.outcome === "needs_approval") {
+  await runs.save(run.id, { state: "awaiting_approval", messages, proposal });
+  await approvals.create({ runId: run.id, card: buildCard(run, proposal, decision.reasons) });
+  return; // worker is freed; nothing is held in memory
+}
+
+// Webhook from the approval UI:
+async function onApproval(runId: string, review: Review) {
+  const run = await runs.load(runId);
+  run.messages.push(toolResult("propose_action", review)); // agent sees the human's decision
+  await continueAgent(run);
+}</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 7 -->
+              <li class="step" id="r7">
+                <div class="step-card">
+                  <div class="step-head"><h3>Act, reply &amp; close</h3><span class="badge">Tool + LLM</span></div>
+                  <p>
+                    Approved actions are executed with an <strong>idempotency key</strong>, so a retry can never
+                    refund twice. The agent writes the final reply in the brand voice, stating only what actually
+                    happened (e.g. the refund ID and timeline). The ticket is updated with tags, resolution code and
+                    the full trace. A satisfaction survey goes out, and if the customer replies, the thread
+                    re-enters at step 1 with full history.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Approved action, draft reply</div>
+                    <div><strong>Output</strong>Action executed, reply sent, ticket closed, trace logged</div>
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <!-- ===================== TOOLS ===================== -->
+          <section id="tools">
+            <h2>Tools</h2>
+            <p class="muted">Read tools can be called freely. Write tools are only reachable through the policy engine.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tool</th><th>Type</th><th>Purpose</th><th>Notes</th></tr></thead>
+                <tbody>
+                  <tr><td><code>lookup_customer</code></td><td>Read</td><td>Profile, tier, lifetime value, ticket history</td><td>Called before the LLM in step 1</td></tr>
+                  <tr><td><code>get_order</code></td><td>Read</td><td>Order items, amounts, dates, status</td><td>Scoped to the identified customer only</td></tr>
+                  <tr><td><code>track_shipment</code></td><td>Read</td><td>Carrier tracking events and delivery proof</td><td>Normalizes multiple carriers</td></tr>
+                  <tr><td><code>search_kb</code></td><td>Read</td><td>Semantic search over help-center and policy articles</td><td>Returns article IDs for citation</td></tr>
+                  <tr><td><code>issue_refund</code></td><td>Write</td><td>Full or partial refund to original payment method</td><td>Policy-gated · idempotency key</td></tr>
+                  <tr><td><code>create_replacement</code></td><td>Write</td><td>Ship a replacement item and/or return label</td><td>Policy-gated · checks inventory</td></tr>
+                  <tr><td><code>escalate_to_human</code></td><td>Handoff</td><td>Assign to a human queue with a summary</td><td>Always allowed</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <details>
+              <summary><code>issue_refund</code> schema</summary>
+              <div><pre><code>{
+  "name": "issue_refund",
+  "description": "Refund an order (full or partial). This is a PROPOSAL: it is checked against policy and may require human approval before it runs.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "order_id": { "type": "string" },
+      "amount": { "type": "number", "description": "In order currency. Must be <= order total minus prior refunds." },
+      "reason_code": { "type": "string", "enum": ["damaged", "not_received", "wrong_item", "late", "goodwill"] },
+      "kb_article_id": { "type": "string", "description": "Policy article justifying the refund" },
+      "justification": { "type": "string", "description": "One or two sentences for the reviewer" }
+    },
+    "required": ["order_id", "amount", "reason_code", "kb_article_id", "justification"]
+  }
+}</code></pre></div>
+            </details>
+          </section>
+
+          <!-- ===================== POLICY ===================== -->
+          <section id="policy">
+            <h2>Policy rules</h2>
+            <p class="muted">Evaluated in order; the first matching rule wins. Values are configurable per brand.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Condition</th><th>Outcome</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>Amount exceeds order total minus prior refunds</td><td><span class="badge guard">deny</span></td></tr>
+                  <tr><td>2</td><td>Customer has a <code>fraud_signal</code> flag or 3+ refunds in 90 days</td><td><span class="badge human">needs approval</span></td></tr>
+                  <tr><td>3</td><td>Order older than 30 days (non-defect reason)</td><td><span class="badge guard">deny</span> → offer store credit</td></tr>
+                  <tr><td>4</td><td>Refund or replacement value &gt; $100</td><td><span class="badge human">needs approval</span></td></tr>
+                  <tr><td>5</td><td><code>goodwill</code> reason over $20</td><td><span class="badge human">needs approval</span></td></tr>
+                  <tr><td>6</td><td>Everything else within policy</td><td><span class="badge decision">allow</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout warn">
+              <p><strong>Why not just put this in the prompt?</strong> Prompts are guidance; code is enforcement. The agent is <em>told</em> the policy so it proposes sensible actions, but the policy engine is what actually decides.</p>
+            </div>
+          </section>
+
+          <!-- ===================== SAMPLE RUN ===================== -->
+          <section id="run">
+            <h2>Sample run</h2>
+            <p class="muted">A damaged-item ticket that crosses the $100 threshold and goes through human approval. The matching node in the architecture diagram lights up at each step. (Illustrative data.)</p>
+            <div class="trace">
+              <div class="trace-bar">
+                <div class="dots"><i></i><i></i><i></i></div>
+                <span>resolveai · ticket_88213 · <span class="trace-count">0 / 0</span></span>
+                <div class="trace-controls">
+                  <button data-act="play">▶ Play</button>
+                  <button data-act="step">Step</button>
+                  <button data-act="reset">Reset</button>
+                </div>
+              </div>
+              <div class="trace-body"><div class="trace-empty">Press ▶ Play to replay an example run, or Step to go one event at a time.</div></div>
+            </div>
+          </section>
+
+          <!-- ===================== GUARDRAILS ===================== -->
+          <section id="guardrails">
+            <h2>Guardrails &amp; evaluation</h2>
+            <div class="two-col">
+              <div class="card">
+                <h3>Guardrails</h3>
+                <ul>
+                  <li><strong>PII redaction</strong> before any model call</li>
+                  <li><strong>Scoped tools:</strong> the agent can only see the identified customer's orders</li>
+                  <li><strong>Policy engine</strong> gates every write action in code</li>
+                  <li><strong>Human approval</strong> above thresholds or on risk signals</li>
+                  <li><strong>Idempotent writes</strong> so retries never double-refund</li>
+                  <li><strong>Reply check:</strong> final message can't promise anything that wasn't executed</li>
+                  <li><strong>Turn limit:</strong> 3 failed attempts → hand off to a human</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Evaluation</h3>
+                <ul>
+                  <li><strong>Replay set:</strong> 300 historical tickets with known correct resolutions</li>
+                  <li><strong>Routing accuracy</strong> and triage F1 per intent</li>
+                  <li><strong>Action correctness:</strong> right action and amount vs. human baseline</li>
+                  <li><strong>Policy-violation rate:</strong> target zero, tested with adversarial tickets</li>
+                  <li><strong>Escalation rate</strong> and approval-override rate (tracks drift)</li>
+                  <li><strong>CSAT</strong> and time-to-resolution in production</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== STACK ===================== -->
+          <section id="stack">
+            <h2>Tech stack</h2>
+            <div class="table-wrap">
+              <table>
+                <tbody>
+                  <tr><th>LLM</th><td>Claude via the Anthropic API: a fast model for triage, a larger model for the order agent and replies</td></tr>
+                  <tr><th>Backend</th><td>TypeScript, Node.js, <code>zod</code> schemas for all structured outputs and tool inputs</td></tr>
+                  <tr><th>State</th><td>Postgres for tickets and paused agent runs; Redis job queue for workers</td></tr>
+                  <tr><th>Knowledge base</th><td>Help-center articles chunked and embedded in pgvector</td></tr>
+                  <tr><th>Integrations</th><td>Order management, carrier tracking and payments APIs behind a thin tool layer</td></tr>
+                  <tr><th>Approval UI</th><td>React reviewer queue with approve / edit / reject and webhooks back to the agent</td></tr>
+                  <tr><th>Observability</th><td>Per-ticket traces, policy decision logs, dashboards for escalation and override rates</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <div class="next-project">
+              <a class="btn" href="research-agent.html">← DeepScout Research Agent</a>
+              <a class="btn btn-primary" href="../index.html#projects">All projects →</a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>© <span data-year></span> Srinjan Ghosh</span>
+      <span><a href="../index.html#projects">All projects</a></span>
+    </div>
+  </footer>
+
+  <script>
+    window.TRACE = [
+      { kind: "user", label: "customer", text: "Hi, my headphones (order A1042) arrived today with a cracked headband. I'd like a refund please.", step: "r1" },
+      { kind: "tool", label: "intake", text: "redact_pii → 0 items · lookup_customer(email) → cust_5521 · tier=standard · 0 refunds in 90d", step: "r1" },
+      { kind: "result", label: "triage", text: "{ intent: \"damaged_item\", order_ids: [\"A1042\"], urgency: \"normal\", sentiment: \"frustrated\", risk_flags: [], confidence: 0.94 }", step: "r2" },
+      { kind: "think", label: "router", text: "No risk flags, confidence ≥ 0.7, standard tier → route = order_agent", step: "r3" },
+      { kind: "tool", label: "agent", text: "get_order(\"A1042\") → Wireless Headphones · $249.00 · delivered 2 days ago", step: "r4" },
+      { kind: "tool", label: "agent", text: "track_shipment(\"A1042\") → delivered, signed · carrier note: package damaged in transit", step: "r4" },
+      { kind: "tool", label: "agent", text: "search_kb(\"damaged on arrival refund\") → kb_112 \"Items damaged in transit: full refund or replacement within 30 days\"", step: "r4" },
+      { kind: "think", label: "agent", text: "Damage confirmed by carrier note and within 30 days. Propose full refund per kb_112.", step: "r4" },
+      { kind: "tool", label: "agent", text: "issue_refund({ order_id: \"A1042\", amount: 249.00, reason_code: \"damaged\", kb_article_id: \"kb_112\" })  ← proposal", step: "r4" },
+      { kind: "guard", label: "policy", text: "rule 4 matched: refund $249.00 > $100 → needs_approval", step: "r5" },
+      { kind: "human", label: "approval", text: "Run paused. Card sent to support-leads queue with evidence + draft reply.", step: "r6" },
+      { kind: "human", label: "reviewer", text: "Priya (support lead) approved · note: \"Carrier confirms damage, OK.\" · 4 min", step: "r6" },
+      { kind: "tool", label: "agent", text: "issue_refund executed · refund_id=rf_90311 · idempotency_key=t88213-A1042-refund", step: "r7" },
+      { kind: "final", label: "reply", text: "Sorry your headphones arrived damaged! I've refunded the full $249.00 to your original card (ref rf_90311). It should appear in 3–5 business days. No need to send them back.", step: "r7" },
+      { kind: "result", label: "close", text: "ticket_88213 resolved · resolution=refund_damaged · 6m 12s total (4m awaiting approval) · CSAT survey sent", step: "r7" }
+    ];
+  </script>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

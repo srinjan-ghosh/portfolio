@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Srinjan Ghosh — Agentic AI</title>
+  <meta name="description" content="Portfolio of agentic AI applications by Srinjan Ghosh — autonomous agents with complete, documented workflows.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="container nav">
+      <a class="brand" href="index.html">srinjan<span>.</span>ghosh</a>
+      <ul class="nav-links">
+        <li><a href="#projects">Projects</a></li>
+        <li class="hide-sm"><a href="#approach">Approach</a></li>
+        <li class="hide-sm"><a href="#contact">Contact</a></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">☾</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="eyebrow">Agentic AI Engineer</div>
+        <h1>I build AI agents that plan, use tools, and finish the job.</h1>
+        <p class="lead">
+          Hi, I'm Srinjan. This portfolio documents the agentic applications I've designed:
+          not just what they do, but <em>how</em> they work. Each project page breaks down the full
+          workflow: every step, tool call, decision point, guardrail and human checkpoint.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#projects">View projects →</a>
+          <a class="btn" href="#contact">Get in touch</a>
+        </div>
+        <div class="stats">
+          <div class="stat"><strong>2</strong><span>Agentic applications</span></div>
+          <div class="stat"><strong>14</strong><span>Documented workflow steps</span></div>
+          <div class="stat"><strong>13</strong><span>Tools wired to agents</span></div>
+          <div class="stat"><strong>2</strong><span>Patterns: multi-agent &amp; tool-use + HITL</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" style="background: var(--bg-sunken); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Projects</div>
+          <h2>Agentic applications</h2>
+          <p class="muted">Each application has its own page with an interactive architecture diagram, a step-by-step workflow, the tools it can call, its guardrails, and a replay of an example run.</p>
+        </div>
+
+        <div class="project-grid">
+          <a class="card project-card" href="projects/research-agent.html">
+            <div class="icon" aria-hidden="true">🔎</div>
+            <div>
+              <h3>DeepScout: Autonomous Research Agent</h3>
+            </div>
+            <p>A multi-agent system that takes an open-ended research question, plans sub-questions, searches and reads sources in parallel, fact-checks its own claims, and delivers a cited report.</p>
+            <div class="mini-flow">
+              <b>Plan</b>→<b>Search ×N</b>→<b>Read</b>→<b>Synthesize</b>→<b>Critique</b>↺→<b>Report</b>
+            </div>
+            <div class="tags">
+              <span class="tag">Orchestrator–workers</span>
+              <span class="tag">Parallel sub-agents</span>
+              <span class="tag">Self-critique loop</span>
+              <span class="tag">Citations</span>
+            </div>
+            <span class="more">See the full workflow →</span>
+          </a>
+
+          <a class="card project-card teal" href="projects/support-agent.html">
+            <div class="icon" aria-hidden="true">🎧</div>
+            <div>
+              <h3>ResolveAI: Customer Support Agent</h3>
+            </div>
+            <p>A tool-using support agent that triages tickets, looks up orders, searches the knowledge base, takes actions like refunds within policy, and escalates to a human when it should.</p>
+            <div class="mini-flow">
+              <b>Intake</b>→<b>Triage</b>→<b>Route</b>→<b>Tools</b>→<b>Policy</b>→<b>Approve?</b>→<b>Reply</b>
+            </div>
+            <div class="tags">
+              <span class="tag">Routing</span>
+              <span class="tag">Function calling</span>
+              <span class="tag">Human-in-the-loop</span>
+              <span class="tag">Guardrails</span>
+            </div>
+            <span class="more">See the full workflow →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="approach">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Approach</div>
+          <h2>How I design agents</h2>
+          <p class="muted">The same principles show up in every project: they're what turn a demo into something you can trust in production.</p>
+        </div>
+        <div class="skill-grid">
+          <div class="card">
+            <h3>Simplest pattern that works</h3>
+            <p>Start with a single LLM call, then add routing, tools, parallel workers or loops only when the task needs them.</p>
+          </div>
+          <div class="card">
+            <h3>Tools with clear contracts</h3>
+            <p>Every tool has a typed schema, a narrow purpose, and errors the model can read and recover from.</p>
+          </div>
+          <div class="card">
+            <h3>Guardrails &amp; human checkpoints</h3>
+            <p>Irreversible or high-impact actions get policy checks and, above a threshold, a human approval step.</p>
+          </div>
+          <div class="card">
+            <h3>Observable &amp; evaluated</h3>
+            <p>Every run is traced step by step, and each agent ships with an eval set that catches regressions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" style="border-top: 1px solid var(--border);">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Contact</div>
+          <h2>Let's build something agentic</h2>
+          <p class="muted">Open to collaborations, freelance work and full-time roles building AI agents.</p>
+        </div>
+        <div class="hero-actions" style="margin-top:0">
+          <a class="btn btn-primary" href="mailto:hello@example.com">Email me</a>
+          <a class="btn" href="https://github.com/srinjan-ghosh" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>© <span data-year></span> Srinjan Ghosh</span>
+      <span><a href="#projects">Projects</a></span>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
