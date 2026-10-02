@@ -489,13 +489,13 @@ td code { white-space: nowrap; }
    circuit grid behind the glass, and the Orbitron/mono type system.
    ========================================================================== */
 :root {
-  --glass-bg: rgba(28, 26, 30, .42);
-  --glass-bg-strong: rgba(22, 20, 24, .62);
+  --glass-bg: rgba(28, 26, 30, .24);
+  --glass-bg-strong: rgba(22, 20, 24, .40);
   --glass-border: rgba(255, 255, 255, .12);
   --glass-hi: rgba(255, 255, 255, .22);      /* top specular edge */
   --glass-lo: rgba(255, 255, 255, .04);      /* bottom edge */
   --glass-sheen: linear-gradient(160deg, rgba(255, 255, 255, .10) 0%, rgba(255, 255, 255, .02) 38%, rgba(255, 255, 255, 0) 60%);
-  --glass-blur: blur(22px) saturate(170%);
+  --glass-blur: blur(16px) saturate(170%);
   --glass-shadow: 0 1px 0 0 var(--glass-hi) inset, 0 -1px 0 0 var(--glass-lo) inset, 0 10px 30px rgba(0, 0, 0, .35), 0 2px 6px rgba(0, 0, 0, .25);
   --hud: rgba(255, 106, 26, .75);
   --blob-1: rgba(255, 106, 26, .55);
@@ -503,8 +503,8 @@ td code { white-space: nowrap; }
   --blob-3: rgba(200, 40, 20, .40);
 }
 :root[data-theme="light"] {
-  --glass-bg: rgba(255, 255, 255, .50);
-  --glass-bg-strong: rgba(255, 255, 255, .72);
+  --glass-bg: rgba(255, 255, 255, .30);
+  --glass-bg-strong: rgba(255, 255, 255, .48);
   --glass-border: rgba(255, 255, 255, .70);
   --glass-hi: rgba(255, 255, 255, .95);
   --glass-lo: rgba(0, 0, 0, .04);
@@ -517,7 +517,10 @@ td code { white-space: nowrap; }
 }
 
 /* Luminous backdrop the glass refracts: soft orange/amber light fields + a faint circuit grid. */
-body { background: var(--bg); position: relative; min-height: 100vh; }
+/* Base colour lives on <html>: a solid <body> background stops backdrop-filter
+   from sampling page content in Chromium, so body stays transparent. */
+html { background: var(--bg); }
+body { background: transparent; position: relative; min-height: 100vh; }
 body::before {
   content: ""; position: fixed; inset: -10vmax; z-index: -2; pointer-events: none;
   background:
@@ -628,3 +631,25 @@ pre { background: rgba(8, 8, 10, .78); border: 1px solid rgba(255, 255, 255, .08
 }
 .project-hero { border-bottom-color: var(--glass-border); }
 .toc ol { border-left-color: var(--glass-border); }
+
+/* Orange border + glow on button hover / keyboard focus */
+.btn:hover, .btn:focus-visible,
+.theme-toggle:hover, .theme-toggle:focus-visible,
+.trace-controls button:not(:disabled):hover, .trace-controls button:focus-visible,
+.flow-node:hover, .flow-node:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 18px var(--glow), 0 1px 0 0 var(--glass-hi) inset;
+  outline: none;
+}
+.btn-primary:hover, .btn-primary:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-2), 0 1px 0 rgba(255, 255, 255, .45) inset, 0 6px 28px var(--glow);
+}
+
+/* Nav stays a little more frosted so links remain legible over scrolling content */
+.site-header {
+  background: var(--glass-sheen), rgba(18, 16, 20, .58);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+:root[data-theme="light"] .site-header { background: var(--glass-sheen), rgba(255, 255, 255, .66); }
