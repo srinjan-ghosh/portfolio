@@ -653,3 +653,15 @@ pre { background: rgba(8, 8, 10, .78); border: 1px solid rgba(255, 255, 255, .08
   backdrop-filter: blur(16px) saturate(180%);
 }
 :root[data-theme="light"] .site-header { background: var(--glass-sheen), rgba(255, 255, 255, .66); }
+
+/* Nav links: orange border + glow on hover, matching buttons */
+.nav-links a { border: 1px solid transparent; transition: border-color .2s, box-shadow .2s, color .2s, background .2s; }
+.nav-links a:hover, .nav-links a:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 14px var(--glow);
+  outline: none;
+  text-decoration: none;
+}
+.brand { border-radius: 999px; padding: 2px 6px; margin-left: -6px; border: 1px solid transparent; transition: border-color .2s, box-shadow .2s; }
+.brand:hover, .brand:focus-visible { border-color: var(--accent); box-shadow: 0 0 14px var(--glow); outline: none; }
