@@ -41,7 +41,7 @@ python3 -m http.server 8000
 
 ## Deploying
 
-`.github/workflows/pages.yml` deploys the site to GitHub Pages on every push to `main`. One-time setup: Settings → Pages → Source: **GitHub Actions**.
+Published with GitHub Pages from the `main` branch (Settings → Pages → Deploy from a branch → `main`, root). Every push to `main` updates the site; no build step or workflow is needed.
 
 ## Adding a new agentic application
 
