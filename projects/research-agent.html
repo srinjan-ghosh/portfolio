@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepScout Research Agent</title>
+  <meta name="description" content="DeepScout: a multi-agent research system. The complete workflow from question to cited report.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="container nav">
+      <a class="brand" href="../index.html">srinjan<span>.</span>ghosh</a>
+      <ul class="nav-links">
+        <li><a href="../index.html#projects">Projects</a></li>
+        <li class="hide-sm"><a href="support-agent.html">ResolveAI</a></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">☾</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="project-hero">
+      <div class="container">
+        <div class="breadcrumb"><a href="../index.html#projects">Projects</a> / DeepScout</div>
+        <div class="eyebrow">Agentic application 01 · Multi-agent</div>
+        <h1>🔎 DeepScout: Autonomous Research Agent</h1>
+        <p class="lead">
+          Ask DeepScout an open-ended question and it behaves like a small research team: a lead agent plans the
+          investigation, spins up parallel search sub-agents, extracts evidence from what they read, writes a draft,
+          has a critic agent fact-check every claim, and loops until the report is grounded and complete.
+        </p>
+        <div class="tags">
+          <span class="tag">Orchestrator–workers</span>
+          <span class="tag">Parallel sub-agents</span>
+          <span class="tag">Evaluator–optimizer loop</span>
+          <span class="tag">Citations</span>
+          <span class="tag">Python</span>
+        </div>
+        <dl class="meta-grid">
+          <div><dt>Pattern</dt><dd>Orchestrator + workers + critic</dd></div>
+          <div><dt>Agents</dt><dd>Lead, Searcher ×N, Critic</dd></div>
+          <div><dt>Tools</dt><dd>6</dd></div>
+          <div><dt>Input → Output</dt><dd>Question → cited report</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="layout">
+        <aside class="toc" aria-label="On this page">
+          <ol>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#tools">Tools</a></li>
+            <li><a href="#run">Sample run</a></li>
+            <li><a href="#guardrails">Guardrails &amp; evals</a></li>
+            <li><a href="#stack">Tech stack</a></li>
+          </ol>
+        </aside>
+
+        <div class="content">
+          <!-- ===================== OVERVIEW ===================== -->
+          <section id="overview">
+            <h2>Overview</h2>
+            <p>
+              Research questions like <em>"How do the leading approaches to grid-scale energy storage compare on cost
+              and maturity?"</em> can't be answered in a single LLM call. The answer depends on many sources, the
+              path through those sources isn't known in advance, and a confident-sounding answer with no evidence
+              behind it is worse than none.
+            </p>
+            <p>
+              DeepScout handles this with an <strong>orchestrator–workers</strong> design. A lead agent owns the plan
+              and the final answer; short-lived searcher sub-agents each investigate one sub-question in parallel
+              with their own context window; a critic agent checks the draft against the collected evidence and
+              can send the lead back for another round.
+            </p>
+            <div class="two-col">
+              <div class="card">
+                <h3>Problem</h3>
+                <ul>
+                  <li>Manual desk research takes hours of searching, reading and note-taking</li>
+                  <li>Single-shot LLM answers hallucinate facts and citations</li>
+                  <li>One long context fills up fast when reading dozens of pages</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>What DeepScout does</h3>
+                <ul>
+                  <li>Breaks the question into independent sub-questions</li>
+                  <li>Researches them in parallel, each in a clean context</li>
+                  <li>Ties every claim in the report to a quoted source</li>
+                  <li>Self-critiques and fills gaps before delivering</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== ARCHITECTURE ===================== -->
+          <section id="architecture">
+            <h2>Architecture</h2>
+            <p class="muted">Click any node to jump to that step in the workflow.</p>
+
+            <div class="flow" role="group" aria-label="DeepScout architecture diagram">
+              <div class="flow-row">
+                <button class="flow-node" data-step="s1"><span class="n-num">01</span><span class="n-title">Intake &amp; Scope</span><span class="n-sub">Lead agent</span></button>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-row">
+                <button class="flow-node" data-step="s2"><span class="n-num">02</span><span class="n-title">Plan</span><span class="n-sub">Sub-questions + budget</span></button>
+              </div>
+              <div class="flow-arrow">↓ fan-out</div>
+              <div class="flow-group">
+                <div class="flow-label">03 · Parallel searcher sub-agents</div>
+                <div class="flow-row">
+                  <button class="flow-node tool" data-step="s3"><span class="n-title">Searcher A</span><span class="n-sub">web_search · fetch_page</span></button>
+                  <button class="flow-node tool" data-step="s3"><span class="n-title">Searcher B</span><span class="n-sub">web_search · read_pdf</span></button>
+                  <button class="flow-node tool" data-step="s3"><span class="n-title">Searcher C</span><span class="n-sub">web_search · fetch_page</span></button>
+                  <button class="flow-node tool" data-step="s3"><span class="n-title">Searcher …N</span><span class="n-sub">up to 6</span></button>
+                </div>
+              </div>
+              <div class="flow-arrow">↓ fan-in</div>
+              <div class="flow-row">
+                <button class="flow-node" data-step="s4"><span class="n-num">04</span><span class="n-title">Extract Evidence</span><span class="n-sub">Claims + quotes → store</span></button>
+                <button class="flow-node" data-step="s5"><span class="n-num">05</span><span class="n-title">Synthesize</span><span class="n-sub">Draft with citations</span></button>
+              </div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-row">
+                <button class="flow-node decision" data-step="s6"><span class="n-num">06</span><span class="n-title">Critique &amp; Verify</span><span class="n-sub">Critic agent · pass / gaps?</span></button>
+              </div>
+              <div class="flow-loop">↺ gaps found → new sub-questions back to step 03 (max 2 rounds)</div>
+              <div class="flow-arrow">↓ pass</div>
+              <div class="flow-row">
+                <button class="flow-node" data-step="s7"><span class="n-num">07</span><span class="n-title">Report &amp; Deliver</span><span class="n-sub">Markdown / PDF + sources</span></button>
+              </div>
+              <div class="legend">
+                <span class="l-llm">LLM step</span>
+                <span class="l-tool">Tool-using sub-agent</span>
+                <span class="l-decision">Decision / loop</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================== WORKFLOW ===================== -->
+          <section id="workflow">
+            <h2>Complete workflow</h2>
+            <p class="muted">Seven steps from question to delivered report. Each step lists its inputs, outputs, and the prompt or code that drives it.</p>
+
+            <ol class="steps">
+              <!-- STEP 1 -->
+              <li class="step" id="s1">
+                <div class="step-card">
+                  <div class="step-head"><h3>Intake &amp; scope the question</h3><span class="badge">LLM · Lead agent</span></div>
+                  <p>
+                    The lead agent reads the user's question and decides whether it's specific enough to research.
+                    If key details are missing (time range, region, audience, depth) it asks up to two clarifying
+                    questions. Otherwise it writes a <strong>research brief</strong> that every later step refers back to.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Raw user question, optional constraints (depth, deadline, format)</div>
+                    <div><strong>Output</strong><code>ResearchBrief</code>: objective, scope, out-of-scope, success criteria</div>
+                  </div>
+                  <details>
+                    <summary>Research brief schema</summary>
+                    <div><pre><code>class ResearchBrief(BaseModel):
+    objective: str            # one-sentence restatement of the question
+    scope: list[str]          # what must be covered
+    out_of_scope: list[str]   # explicitly excluded
+    audience: str             # e.g. "technical PM", "investor"
+    depth: Literal["quick", "standard", "deep"]
+    success_criteria: list[str]
+    needs_clarification: bool
+    clarifying_questions: list[str] = []</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 2 -->
+              <li class="step" id="s2">
+                <div class="step-card">
+                  <div class="step-head"><h3>Plan the research</h3><span class="badge">LLM · Lead agent</span></div>
+                  <p>
+                    The lead agent breaks the brief into 3–6 <strong>independent sub-questions</strong> that can be
+                    researched in parallel without depending on each other. It also sets a budget (search calls and
+                    tokens per sub-agent) scaled to the requested depth. The plan is saved to memory so it survives
+                    if the context window is later trimmed.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong><code>ResearchBrief</code></div>
+                    <div><strong>Output</strong><code>ResearchPlan</code>: sub-questions, search hints, per-agent budget</div>
+                  </div>
+                  <details>
+                    <summary>Planner prompt (excerpt)</summary>
+                    <div><pre><code>You are the lead researcher. Decompose the brief into 3-6 sub-questions.
+Rules:
+- Each sub-question must be answerable on its own (no dependencies).
+- Together they must cover every item in brief.scope.
+- For each, give 2-3 starting search queries and the source types to prefer
+  (peer-reviewed, government data, industry reports, reputable news).
+- Scale effort: quick = 3 sub-questions / 5 searches each,
+  standard = 4 / 8, deep = 6 / 15.
+Return JSON matching ResearchPlan.</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 3 -->
+              <li class="step" id="s3">
+                <div class="step-card">
+                  <div class="step-head"><h3>Parallel search sub-agents</h3><span class="badge tool">Tool use · Searcher ×N</span></div>
+                  <p>
+                    For each sub-question the orchestrator starts a <strong>searcher sub-agent</strong> with a fresh
+                    context window. Each one runs its own tool loop: search, open the most promising results, decide
+                    whether it has enough, refine the query, repeat. It stops when the sub-question is answered or
+                    its budget runs out. Running them concurrently cuts wall-clock time by roughly the number of
+                    sub-agents, and each agent's context stays focused on one topic.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>One sub-question, search hints, budget</div>
+                    <div><strong>Output</strong>Condensed findings + list of source URLs actually read</div>
+                  </div>
+                  <details>
+                    <summary>Orchestration code</summary>
+                    <div><pre><code>async def run_searchers(plan: ResearchPlan) -> list[Findings]:
+    tasks = [
+        run_agent(
+            system=SEARCHER_PROMPT,
+            task=sq.question,
+            hints=sq.search_hints,
+            tools=[web_search, fetch_page, read_pdf],
+            max_tool_calls=plan.budget.searches_per_agent,
+        )
+        for sq in plan.sub_questions
+    ]
+    # Sub-agents run concurrently; one failure doesn't sink the run.
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    return [r for r in results if not isinstance(r, Exception)]</code></pre></div>
+                  </details>
+                  <details>
+                    <summary>Searcher agent loop</summary>
+                    <div><pre><code>async def run_agent(system, task, tools, max_tool_calls, **ctx):
+    messages = [{"role": "user", "content": render(task, ctx)}]
+    for _ in range(max_tool_calls):
+        resp = await llm.create(system=system, messages=messages, tools=tools)
+        messages.append({"role": "assistant", "content": resp.content})
+        if resp.stop_reason != "tool_use":
+            return parse_findings(resp)          # agent decided it's done
+        results = await execute_tools(resp.tool_calls)
+        messages.append({"role": "user", "content": results})
+    return await force_summary(messages)          # budget exhausted</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 4 -->
+              <li class="step" id="s4">
+                <div class="step-card">
+                  <div class="step-head"><h3>Extract evidence</h3><span class="badge">LLM · Lead agent</span></div>
+                  <p>
+                    Searcher findings are converted into atomic <strong>evidence records</strong>: a single claim,
+                    the verbatim quote that supports it, and the source it came from. Duplicate claims from different
+                    sources are merged (which raises their confidence), and conflicting claims are flagged rather
+                    than silently resolved. Records go into an evidence store the later steps can query.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Findings from all searchers</div>
+                    <div><strong>Output</strong>Evidence store: <code>Evidence[]</code> + conflict list</div>
+                  </div>
+                  <details>
+                    <summary>Evidence record</summary>
+                    <div><pre><code>{
+  "id": "ev_017",
+  "claim": "Pumped hydro accounts for the majority of installed grid storage capacity worldwide.",
+  "quote": "…pumped storage hydropower remains the largest source of …",
+  "source": { "id": "src_04", "url": "https://…", "title": "…", "published": "2025-11" },
+  "sub_question": "sq_1",
+  "support_count": 3,
+  "conflicts_with": []
+}</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 5 -->
+              <li class="step" id="s5">
+                <div class="step-card">
+                  <div class="step-head"><h3>Synthesize a draft</h3><span class="badge">LLM · Lead agent</span></div>
+                  <p>
+                    The lead agent writes the report against the brief's success criteria, using
+                    <strong>only</strong> the evidence store. Every factual sentence carries an inline citation
+                    like <code>[ev_017]</code>. Where evidence conflicts, the draft presents both sides with their
+                    sources instead of picking one. Sections the evidence can't support are marked as gaps.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Brief, plan, evidence store</div>
+                    <div><strong>Output</strong>Draft report with evidence IDs + explicit gap list</div>
+                  </div>
+                  <details>
+                    <summary>Synthesis rules (excerpt)</summary>
+                    <div><pre><code>- Use only facts present in the evidence store. Cite with [ev_id].
+- No citation available? Either drop the sentence or mark it [GAP].
+- When evidence conflicts, state both positions and cite each.
+- Lead with a 3-5 bullet executive summary; then one section per sub-question.
+- Prefer recent sources; note publication dates for time-sensitive figures.</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 6 -->
+              <li class="step" id="s6">
+                <div class="step-card">
+                  <div class="step-head"><h3>Critique &amp; verify</h3><span class="badge decision">Decision · Critic agent</span></div>
+                  <p>
+                    A separate <strong>critic agent</strong>, with a different prompt and no stake in the draft,
+                    reviews it on four checks: <em>grounding</em> (does each cited quote actually support the
+                    sentence?), <em>coverage</em> (is every scope item answered?), <em>balance</em> (are conflicts
+                    represented fairly?) and <em>freshness</em>. It returns a verdict. On <code>revise</code>, its
+                    gap list becomes new sub-questions and the workflow loops back to step 3, up to two extra rounds.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Draft, evidence store, brief</div>
+                    <div><strong>Output</strong><code>pass</code> or <code>revise</code> + unsupported claims + new sub-questions</div>
+                  </div>
+                  <details>
+                    <summary>Loop control</summary>
+                    <div><pre><code>for round in range(MAX_ROUNDS + 1):        # MAX_ROUNDS = 2
+    draft = await synthesize(brief, evidence)
+    review = await critic(draft, evidence, brief)
+    if review.verdict == "pass":
+        break
+    draft = remove_unsupported(draft, review.unsupported_claims)
+    if round == MAX_ROUNDS:
+        draft.add_limitations(review.gaps)   # be honest about what's missing
+        break
+    new_plan = plan_followups(review.gaps)
+    evidence += extract(await run_searchers(new_plan))</code></pre></div>
+                  </details>
+                </div>
+              </li>
+
+              <!-- STEP 7 -->
+              <li class="step" id="s7">
+                <div class="step-card">
+                  <div class="step-head"><h3>Report &amp; deliver</h3><span class="badge">Output</span></div>
+                  <p>
+                    Evidence IDs are converted to numbered footnotes with titles, URLs and dates. The report gets an
+                    executive summary, a confidence rating per section (based on source count and agreement), a
+                    <em>Limitations</em> section listing any remaining gaps, and the full source list. It's delivered
+                    as Markdown and PDF, and the full run trace is saved for auditing.
+                  </p>
+                  <div class="io">
+                    <div><strong>Input</strong>Approved draft, evidence store</div>
+                    <div><strong>Output</strong>Final report (MD/PDF), source list, run trace</div>
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <!-- ===================== TOOLS ===================== -->
+          <section id="tools">
+            <h2>Tools</h2>
+            <p class="muted">Every tool has a typed JSON schema and returns errors as readable text so the agent can recover (e.g. a 404 tells it to try a different result).</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Tool</th><th>Used by</th><th>Purpose</th><th>Notes</th></tr></thead>
+                <tbody>
+                  <tr><td><code>web_search</code></td><td>Searchers</td><td>Query a search API, return top results with snippets</td><td>Domain allow/deny lists; max 10 results</td></tr>
+                  <tr><td><code>fetch_page</code></td><td>Searchers</td><td>Download a URL and return clean readable text</td><td>Strips nav/ads; truncates to 8k tokens</td></tr>
+                  <tr><td><code>read_pdf</code></td><td>Searchers</td><td>Extract text and tables from a PDF report or paper</td><td>Page-range parameter for long docs</td></tr>
+                  <tr><td><code>save_evidence</code></td><td>Lead</td><td>Write claim + quote + source to the evidence store</td><td>Deduplicates by semantic similarity</td></tr>
+                  <tr><td><code>query_evidence</code></td><td>Lead, Critic</td><td>Retrieve evidence by sub-question or keyword</td><td>Returns IDs for citation</td></tr>
+                  <tr><td><code>run_python</code></td><td>Lead</td><td>Sandboxed calculation for comparisons, unit conversions, charts</td><td>No network; 10s timeout</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <details>
+              <summary><code>web_search</code> schema</summary>
+              <div><pre><code>{
+  "name": "web_search",
+  "description": "Search the web. Use specific queries; prefer primary sources. Returns title, url, snippet, date.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string", "description": "Search query, 2-10 words" },
+      "recency_days": { "type": "integer", "description": "Only results newer than N days" },
+      "max_results": { "type": "integer", "default": 5, "maximum": 10 }
+    },
+    "required": ["query"]
+  }
+}</code></pre></div>
+            </details>
+          </section>
+
+          <!-- ===================== SAMPLE RUN ===================== -->
+          <section id="run">
+            <h2>Sample run</h2>
+            <p class="muted">Replay an example run event by event. The matching node in the architecture diagram lights up as the agent moves through the workflow. (Illustrative data, abbreviated.)</p>
+            <div class="trace">
+              <div class="trace-bar">
+                <div class="dots"><i></i><i></i><i></i></div>
+                <span>deepscout · run_7f3a · <span class="trace-count">0 / 0</span></span>
+                <div class="trace-controls">
+                  <button data-act="play">▶ Play</button>
+                  <button data-act="step">Step</button>
+                  <button data-act="reset">Reset</button>
+                </div>
+              </div>
+              <div class="trace-body"><div class="trace-empty">Press ▶ Play to replay an example run, or Step to go one event at a time.</div></div>
+            </div>
+          </section>
+
+          <!-- ===================== GUARDRAILS ===================== -->
+          <section id="guardrails">
+            <h2>Guardrails &amp; evaluation</h2>
+            <div class="two-col">
+              <div class="card">
+                <h3>Guardrails</h3>
+                <ul>
+                  <li><strong>Grounding-only synthesis:</strong> no evidence, no sentence</li>
+                  <li><strong>Citation check:</strong> the critic verifies each quote supports its claim</li>
+                  <li><strong>Budgets:</strong> per-agent tool-call caps and a global token/cost ceiling</li>
+                  <li><strong>Loop limit:</strong> at most 2 revision rounds, then report limitations</li>
+                  <li><strong>Source policy:</strong> domain deny list; prefers primary sources</li>
+                  <li><strong>Prompt-injection defense:</strong> fetched page text is treated as data, never instructions</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Evaluation</h3>
+                <ul>
+                  <li><strong>Eval set:</strong> 40 research questions with reference answers</li>
+                  <li><strong>Citation precision:</strong> % of citations that truly support the claim</li>
+                  <li><strong>Coverage:</strong> % of scope items answered (LLM-judge + rubric)</li>
+                  <li><strong>Efficiency:</strong> tool calls, tokens and wall-clock per report</li>
+                  <li><strong>Regression gate:</strong> evals run on every prompt or model change</li>
+                </ul>
+              </div>
+            </div>
+            <div class="callout teal">
+              <p><strong>Design note:</strong> keeping the critic separate from the writer matters. A model reviewing its own draft in the same context tends to approve it; a fresh context with an adversarial prompt catches far more unsupported claims.</p>
+            </div>
+          </section>
+
+          <!-- ===================== STACK ===================== -->
+          <section id="stack">
+            <h2>Tech stack</h2>
+            <div class="table-wrap">
+              <table>
+                <tbody>
+                  <tr><th>LLM</th><td>Claude via the Anthropic API: a larger model for lead and critic, a faster model for searchers</td></tr>
+                  <tr><th>Orchestration</th><td>Python <code>asyncio</code> with a small custom agent loop (no heavy framework)</td></tr>
+                  <tr><th>Search &amp; fetch</th><td>Web search API, <code>httpx</code>, readability-style HTML extraction, PDF parser</td></tr>
+                  <tr><th>Evidence store</th><td>SQLite + vector embeddings for deduplication and retrieval</td></tr>
+                  <tr><th>Interface</th><td>FastAPI backend with streaming progress; Markdown/PDF export</td></tr>
+                  <tr><th>Observability</th><td>Structured per-step traces (like the replay above), cost and latency dashboards</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <div class="next-project">
+              <a class="btn" href="../index.html#projects">← All projects</a>
+              <a class="btn btn-primary" href="support-agent.html">Next: ResolveAI Support Agent →</a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>© <span data-year></span> Srinjan Ghosh</span>
+      <span><a href="../index.html#projects">All projects</a></span>
+    </div>
+  </footer>
+
+  <script>
+    window.TRACE = [
+      { kind: "user", label: "user", text: "How do the leading approaches to grid-scale energy storage compare on cost and maturity? Audience: product team, standard depth.", step: "s1" },
+      { kind: "think", label: "lead", text: "Question is specific enough. Brief → objective: compare grid storage technologies; scope: lithium-ion, flow batteries, pumped hydro, compressed air, thermal; criteria: cost, maturity, duration.", step: "s1" },
+      { kind: "think", label: "lead", text: "Plan: 4 sub-questions → sq_1 deployed capacity & maturity · sq_2 cost trends · sq_3 duration & use cases · sq_4 emerging tech outlook. Budget: 8 searches/agent.", step: "s2" },
+      { kind: "tool", label: "searcher A", text: "web_search({ query: \"grid storage installed capacity by technology\", recency_days: 540 })", step: "s3" },
+      { kind: "tool", label: "searcher B", text: "web_search({ query: \"levelized cost of storage comparison report\" })", step: "s3" },
+      { kind: "tool", label: "searcher C", text: "web_search({ query: \"long duration energy storage use cases\" })", step: "s3" },
+      { kind: "result", label: "searcher B", text: "read_pdf(lcos_report.pdf, pages 12-18) → cost tables by technology and duration", step: "s3" },
+      { kind: "result", label: "searchers", text: "4/4 sub-agents finished · 29 tool calls · 17 sources read", step: "s3" },
+      { kind: "think", label: "lead", text: "Extracted 46 evidence records, merged to 31. 1 conflict flagged: two sources disagree on flow-battery cost trajectory.", step: "s4" },
+      { kind: "think", label: "lead", text: "Drafting report: exec summary + 4 sections, 38 citations. 1 [GAP]: thermal storage maturity.", step: "s5" },
+      { kind: "guard", label: "critic", text: "verdict=revise · 2 unsupported claims removed · gap: thermal storage maturity under-sourced → new sub-question sq_5.", step: "s6" },
+      { kind: "tool", label: "searcher E", text: "web_search({ query: \"thermal energy storage commercial deployments\" }) → 3 sources", step: "s3" },
+      { kind: "think", label: "lead", text: "Added 5 evidence records; redrafted thermal section.", step: "s5" },
+      { kind: "result", label: "critic", text: "verdict=pass · citation precision 100% · coverage 5/5 scope items", step: "s6" },
+      { kind: "final", label: "deliver", text: "report.md + report.pdf · 20 sources · confidence: High (3 sections), Medium (2) · 2m 41s · 1 revision round", step: "s7" }
+    ];
+  </script>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
