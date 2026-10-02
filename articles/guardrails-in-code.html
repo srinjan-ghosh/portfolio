@@ -3,17 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Guardrails in Code</title>
+  <title>Guardrails in Code · Autonomia</title>
   <meta name="description" content="Why an agent that can take real actions needs a deterministic policy engine between the model and every write, and how to design the human-approval handoff.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,500;0,600;1,400&family=Orbitron:wght@600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
   <header class="site-header">
     <nav class="container nav">
-      <a class="brand" href="../index.html">srinjan<span>.</span>ghosh</a>
+      <a class="brand" href="../index.html"><img src="../assets/img/logo.svg" alt="">Autonomia</a>
       <ul class="nav-links">
         <li><a href="../index.html#projects">Projects</a></li>
         <li><a href="../index.html#writing">Writing</a></li>
@@ -26,10 +27,11 @@
     <article class="article">
       <div class="breadcrumb"><a href="../index.html#writing">Writing</a> / Guardrails in code</div>
       <div class="article-meta"><span>Agent safety</span><span>·</span><span>8 min read</span></div>
+      <div class="byline">By Autonomia Engineering</div>
       <h1>Guardrails belong in code, not in the prompt</h1>
       <p class="lead">
         The moment an agent can move money, the question changes from "will it give a good answer?" to
-        "what is the worst thing it can do?" Here's how I answered that for ResolveAI, a support agent
+        "what is the worst thing it can do?" Here's how we answered that for ResolveAI, a support agent
         that can issue refunds.
       </p>
 
@@ -150,7 +152,7 @@ function evaluate(p: Proposal, order: Order, history: History): Decision {
 
   <footer class="site-footer">
     <div class="container">
-      <span>© <span data-year></span> Srinjan Ghosh</span>
+      <span>© <span data-year></span> Autonomia · Built by Srinjan Ghosh</span>
       <span><a href="../index.html#writing">All writing</a></span>
     </div>
   </footer>

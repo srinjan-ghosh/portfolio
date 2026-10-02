@@ -1,6 +1,8 @@
-# Agentic AI Portfolio
+# Autonomia: agentic AI applications
 
-A static portfolio site showcasing agentic AI applications, each with its own page documenting the complete workflow.
+*Autonomia*, Italian for *autonomy*. A static site showcasing agentic AI applications, each with its own page documenting the complete workflow.
+
+Brand: orange and black (dark theme by default, light theme via the toggle), logo in `assets/img/logo.svg`, fonts Orbitron (display), Exo 2 (body) and Share Tech Mono (code and labels).
 
 ## Projects
 

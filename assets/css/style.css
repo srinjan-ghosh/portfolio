@@ -3,68 +3,56 @@
    ========================================================================== */
 
 :root {
-  --bg: #f7f7f5;
-  --bg-elev: #ffffff;
-  --bg-sunken: #efeeea;
-  --text: #1b1b1f;
-  --text-muted: #5d5d66;
-  --border: #e0ded8;
-  --accent: #4f46e5;
-  --accent-soft: #eceafd;
-  --accent-2: #0d9488;
-  --accent-2-soft: #dcf3f0;
-  --warn: #b45309;
-  --warn-soft: #fdf0dc;
-  --danger: #be123c;
-  --danger-soft: #fde4ea;
-  --code-bg: #16161d;
-  --code-text: #e6e6ef;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 4px 16px rgba(0, 0, 0, .05);
+  /* Autonomia: orange & black. Dark is the default theme. */
+  --bg: #0b0b0d;
+  --bg-elev: #141417;
+  --bg-sunken: #0f0f12;
+  --text: #f4f1ec;
+  --text-muted: #9b968f;
+  --border: #26262b;
+  --accent: #ff6a1a;
+  --accent-soft: #2a160b;
+  --on-accent: #0b0b0d;
+  --accent-2: #ffb020;
+  --accent-2-soft: #2b2108;
+  --warn: #ff8a3d;
+  --warn-soft: #2e1709;
+  --danger: #ff5c5c;
+  --danger-soft: #331314;
+  --code-bg: #08080a;
+  --code-text: #ece8e1;
+  --glow: rgba(255, 106, 26, .35);
+  --grid: rgba(255, 106, 26, .07);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 6px 20px rgba(0, 0, 0, .35);
   --radius: 14px;
   --radius-sm: 8px;
   --maxw: 1120px;
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font: "Exo 2", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display: "Orbitron", "Exo 2", system-ui, sans-serif;
+  --mono: "Share Tech Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f0f13;
-    --bg-elev: #17171d;
-    --bg-sunken: #121217;
-    --text: #ececf1;
-    --text-muted: #9a9aa6;
-    --border: #2a2a33;
-    --accent: #8b85ff;
-    --accent-soft: #23214a;
-    --accent-2: #2dd4bf;
-    --accent-2-soft: #10302d;
-    --warn: #fbbf24;
-    --warn-soft: #33270e;
-    --danger: #fb7185;
-    --danger-soft: #3a1520;
-    --code-bg: #0a0a0e;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0f0f13;
-  --bg-elev: #17171d;
-  --bg-sunken: #121217;
-  --text: #ececf1;
-  --text-muted: #9a9aa6;
-  --border: #2a2a33;
-  --accent: #8b85ff;
-  --accent-soft: #23214a;
-  --accent-2: #2dd4bf;
-  --accent-2-soft: #10302d;
-  --warn: #fbbf24;
-  --warn-soft: #33270e;
-  --danger: #fb7185;
-  --danger-soft: #3a1520;
-  --code-bg: #0a0a0e;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+:root[data-theme="light"] {
+  --bg: #faf7f2;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1ece4;
+  --text: #121214;
+  --text-muted: #5c5750;
+  --border: #e4ddd2;
+  --accent: #c2410c;
+  --accent-soft: #ffe9dc;
+  --on-accent: #ffffff;
+  --accent-2: #a15c00;
+  --accent-2-soft: #fff1d6;
+  --warn: #b4410a;
+  --warn-soft: #fde7d6;
+  --danger: #be123c;
+  --danger-soft: #fde4ea;
+  --code-bg: #121214;
+  --code-text: #ece8e1;
+  --glow: rgba(194, 65, 12, .18);
+  --grid: rgba(194, 65, 12, .06);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 4px 16px rgba(0, 0, 0, .06);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -85,8 +73,9 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .5em; letter-spacing: -0.01em; }
-h1 { font-size: clamp(2rem, 5vw, 3.2rem); letter-spacing: -0.03em; }
-h2 { font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em; }
+h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; }
+h1 { font-size: clamp(1.8rem, 4.6vw, 3rem); letter-spacing: .01em; }
+h2 { font-size: clamp(1.3rem, 2.6vw, 1.75rem); }
 h3 { font-size: 1.2rem; }
 p { margin: 0 0 1em; }
 
@@ -119,10 +108,11 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; color: i
 .eyebrow {
   font-size: .78rem;
   font-weight: 600;
-  letter-spacing: .1em;
+  letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: .6rem;
+  font-family: var(--mono);
 }
 
 /* ---------- Header / nav ---------- */
@@ -181,12 +171,12 @@ section { padding: 72px 0; }
   font-family: inherit;
 }
 .btn:hover { text-decoration: none; border-color: var(--text-muted); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 0 18px var(--glow); }
 .btn-primary:hover { border-color: var(--accent); filter: brightness(1.08); }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 3rem; }
 .stat { border-left: 2px solid var(--accent); padding-left: 1rem; }
-.stat strong { display: block; font-size: 1.6rem; letter-spacing: -0.02em; }
+.stat strong { display: block; font-size: 1.6rem; font-family: var(--display); color: var(--accent); }
 .stat span { color: var(--text-muted); font-size: .9rem; }
 
 /* ---------- Cards ---------- */
@@ -333,8 +323,8 @@ section { padding: 72px 0; }
   width: 2.2rem; height: 2.2rem;
   border-radius: 50%;
   display: grid; place-items: center;
-  background: var(--accent); color: #fff;
-  font-weight: 700; font-size: .9rem;
+  background: var(--accent); color: var(--on-accent);
+  font-weight: 700; font-size: .9rem; font-family: var(--display);
 }
 .step::after {
   content: "";
@@ -450,3 +440,44 @@ td code { white-space: nowrap; }
 .article blockquote { margin: 1.5rem 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid var(--accent); color: var(--text-muted); font-style: italic; }
 .article .article-meta { margin-bottom: 1rem; }
 .article-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+
+/* ==========================================================================
+   Autonomia brand
+   ========================================================================== */
+.brand { display: inline-flex; align-items: center; gap: .55rem; font-family: var(--display); font-weight: 800; font-size: 1rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text); }
+.brand img { width: 30px; height: 30px; display: block; }
+.brand span { color: var(--accent); }
+
+.hero { position: relative; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 30% 30%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 30% 30%, #000 30%, transparent 75%);
+}
+.hero .container { position: relative; }
+.hero-logo { width: 72px; height: 72px; margin-bottom: 1.25rem; filter: drop-shadow(0 0 18px var(--glow)); }
+.origin { font-family: var(--mono); font-size: .9rem; color: var(--text-muted); margin-top: -.25rem; }
+.origin em { color: var(--accent); font-style: normal; }
+
+.project-card h3, .article-card h3, .card h3 { font-family: var(--display); font-weight: 600; letter-spacing: .02em; }
+.project-card .icon, .project-card.teal .icon { background: var(--accent-soft); border: 1px solid var(--accent); }
+.project-card:hover, .article-card:hover { box-shadow: 0 0 0 1px var(--accent), 0 0 24px var(--glow); }
+.tag { font-family: var(--mono); letter-spacing: .02em; }
+.mini-flow, .meta-grid dt, .badge, th { font-family: var(--mono); }
+.stat { border-left-color: var(--accent); }
+.byline { font-family: var(--mono); color: var(--accent); font-size: .85rem; margin-bottom: .5rem; }
+
+/* Trace replay in the orange palette */
+.trace-line.k-think { border-left-color: #ff6a1a; } .trace-line.k-think .t-kind { color: #ff9a5c; }
+.trace-line.k-tool { border-left-color: #ffb020; } .trace-line.k-tool .t-kind { color: #ffc95c; }
+.trace-line.k-result { border-left-color: #e8e2d8; } .trace-line.k-result .t-kind { color: #f4f1ec; }
+.trace-controls button:hover { border-color: #ff6a1a; }
+@media (max-width: 420px) {
+  .brand { font-size: .85rem; letter-spacing: .08em; gap: .4rem; }
+  .brand img { width: 26px; height: 26px; }
+  .nav-links { gap: .9rem; }
+}

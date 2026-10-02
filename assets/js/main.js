@@ -9,11 +9,8 @@
   } catch (e) { /* storage unavailable */ }
 
   const toggle = document.querySelector(".theme-toggle");
-  const isDark = () => {
-    const t = root.getAttribute("data-theme");
-    if (t) return t === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  };
+  // Dark is the brand default; light is opt-in via the toggle.
+  const isDark = () => root.getAttribute("data-theme") !== "light";
   const syncIcon = () => { if (toggle) toggle.textContent = isDark() ? "☀" : "☾"; };
   syncIcon();
   if (toggle) {
