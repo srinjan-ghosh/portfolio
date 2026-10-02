@@ -9,6 +9,8 @@ A static portfolio site showcasing agentic AI applications, each with its own pa
 | **DeepScout**: Autonomous Research Agent | Orchestrator–workers, parallel sub-agents, critic loop | [`projects/research-agent.html`](projects/research-agent.html) |
 | **ResolveAI**: Customer Support Agent | Routing, tool use, policy engine, human-in-the-loop | [`projects/support-agent.html`](projects/support-agent.html) |
 
+**ResolveAI is implemented** as a runnable TypeScript agent (CLI + web UI) in [`agents/resolveai/`](agents/resolveai/).
+
 Each project page includes:
 
 - **Overview**: the problem and what the agent does

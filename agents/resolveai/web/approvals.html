@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ResolveAI Approvals</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header>
+    <h1>🛡️ ResolveAI · reviewer queue</h1>
+    <nav><a href="/">← Customer chat</a></nav>
+  </header>
+  <main>
+    <div class="row" style="margin-bottom: 1rem; justify-content: space-between">
+      <p style="margin:0" class="muted">Actions the policy engine sent for human review. The agent's run is paused until you decide.</p>
+      <label style="margin:0; display:flex; gap:.4rem; align-items:center; width:auto">Reviewer <input id="reviewer" value="Priya" style="width:140px"></label>
+    </div>
+    <div class="cards" id="cards"></div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    let rendered = "";
+
+    async function decide(id, decision) {
+      const card = document.querySelector(`[data-id="${id}"]`);
+      const amount = card.querySelector("[name=amount]").value;
+      const note = card.querySelector("[name=note]").value;
+      const body = { decision, reviewer: $("reviewer").value || "reviewer" };
+      if (decision === "approve" && amount) body.amount = Number(amount);
+      if (note) body.note = note;
+      card.querySelectorAll("button").forEach((b) => (b.disabled = true));
+      const res = await fetch(`/api/approvals/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) alert((await res.json()).error);
+      load();
+    }
+
+    async function load() {
+      const approvals = await (await fetch("/api/approvals")).json();
+      const key = JSON.stringify(approvals.map((a) => [a.id, a.status]));
+      if (key === rendered) return; // don't wipe inputs the reviewer is typing in
+      rendered = key;
+      if (!approvals.length) {
+        $("cards").innerHTML = '<div class="empty-state">No approvals yet. Send a ticket over $100 from the customer chat (e.g. order A1042).</div>';
+        return;
+      }
+      $("cards").innerHTML = approvals.map((a) => {
+        const p = a.card.proposal;
+        const pending = a.status === "pending";
+        return `<div class="card ${pending ? "pending" : ""}" data-id="${a.id}">
+          <h3>${esc(p.action)} $${p.amount.toFixed(2)} · order ${esc(p.orderId)}</h3>
+          <div class="meta">${esc(a.id)} · ${esc(a.ticketId)} · ${new Date(a.createdAt).toLocaleString()} · <span class="status ${pending ? "awaiting_approval" : a.status === "approved" ? "resolved" : "escalated"}">${a.status}</span></div>
+          <div><strong>Customer:</strong> ${esc(a.card.customer)}</div>
+          <div><strong>Message:</strong> “${esc(a.card.issue)}”</div>
+          <ul>${a.card.evidence.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
+          <div class="proposal"><strong>Agent's justification:</strong> ${esc(p.justification)}<br><span class="rule">Sent for review by ${esc(a.card.rule)}</span></div>
+          ${pending ? `<div class="controls">
+              <input name="amount" type="number" step="0.01" min="0.01" placeholder="Amount ${p.amount}" aria-label="Edit amount">
+              <input name="note" placeholder="Note for the agent (optional)" aria-label="Note">
+              <button class="primary" onclick="decide('${a.id}','approve')">Approve</button>
+              <button onclick="decide('${a.id}','reject')">Reject</button>
+            </div>` : `<div class="meta">Reviewed by ${esc(a.review.reviewer)}${a.review.amount ? ` · amount $${a.review.amount.toFixed(2)}` : ""}${a.review.note ? ` · “${esc(a.review.note)}”` : ""}</div>
+            <input type="hidden" name="amount"><input type="hidden" name="note">`}
+        </div>`;
+      }).join("");
+    }
+
+    load();
+    setInterval(load, 1500);
+  </script>
+</body>
+</html>

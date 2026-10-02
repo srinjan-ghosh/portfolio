@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ResolveAI Chat</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header>
+    <h1>🎧 ResolveAI · customer chat</h1>
+    <nav>
+      <a href="/approvals">Reviewer queue <span id="pending-count"></span></a>
+      <button id="reset" title="Restore demo data">Reset demo</button>
+    </nav>
+  </header>
+  <main>
+    <div class="grid">
+      <section class="panel">
+        <h2>Customer</h2>
+        <label for="customer">Signed in as</label>
+        <select id="customer"></select>
+        <div class="examples" id="examples"></div>
+        <div class="chat" id="chat"></div>
+        <form id="form">
+          <label for="text">Message</label>
+          <textarea id="text" placeholder="Describe your issue…" required></textarea>
+          <div class="row" style="margin-top:.6rem; justify-content: space-between">
+            <span class="status" id="status">idle</span>
+            <button class="primary" id="send">Send</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Agent trace</h2>
+        <div class="steps" id="steps">
+          <span data-step="r1">01 Intake</span><span data-step="r2">02 Triage</span><span data-step="r3">03 Route</span>
+          <span data-step="r4">04 Investigate</span><span data-step="r5">05 Policy</span><span data-step="r6">06 Approval</span><span data-step="r7">07 Reply</span>
+        </div>
+        <div id="approval-notice"></div>
+        <div class="trace" id="trace"><div class="empty">Send a message to watch the agent work.</div></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const EXAMPLES = {
+      "alex@example.com": [
+        "My headphones, order A1042, arrived with a cracked headband. I'd like a refund.",
+        "My phone case (A1077) arrived broken.",
+        "I want to return my rain jacket, order A0950.",
+        "Order A1042 arrived damaged and I'm calling my lawyer.",
+      ],
+      "jordan@example.com": ["Where is my smart watch? Order B2001 hasn't arrived.", "How do I reset my password?"],
+      "sam@example.com": ["My desk lamp C3005 arrived broken."],
+    };
+    const $ = (id) => document.getElementById(id);
+    let ticketId = null, timer = null;
+
+    async function api(path, opts) {
+      const res = await fetch(path, { headers: { "content-type": "application/json" }, ...opts });
+      return res.json();
+    }
+
+    async function loadCustomers() {
+      const customers = await api("/api/customers");
+      $("customer").innerHTML = customers.map((c) =>
+        `<option value="${c.email}">${c.name} · ${c.email} · ${c.tier} · orders ${c.orders.map((o) => o.id).join(", ")}</option>`).join("");
+      renderExamples();
+    }
+
+    function renderExamples() {
+      const list = EXAMPLES[$("customer").value] || [];
+      $("examples").innerHTML = "";
+      for (const ex of list) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = ex;
+        b.onclick = () => { $("text").value = ex; $("text").focus(); };
+        $("examples").appendChild(b);
+      }
+    }
+
+    function render(t) {
+      $("chat").innerHTML = "";
+      for (const m of t.messages) {
+        const d = document.createElement("div");
+        d.className = `msg ${m.from}`;
+        d.textContent = m.text;
+        $("chat").appendChild(d);
+      }
+      $("status").textContent = t.status.replace("_", " ");
+      $("status").className = `status ${t.status}`;
+      const trace = $("trace");
+      trace.innerHTML = "";
+      for (const e of t.trace) {
+        const d = document.createElement("div");
+        d.className = `ev k-${e.kind}`;
+        const b = document.createElement("b");
+        b.textContent = `[${e.label}]`;
+        d.append(b, document.createTextNode(e.text));
+        trace.appendChild(d);
+      }
+      trace.scrollTop = trace.scrollHeight;
+      const seen = new Set(t.trace.map((e) => e.step));
+      const current = t.trace.at(-1)?.step;
+      document.querySelectorAll("#steps span").forEach((s) => {
+        s.className = s.dataset.step === current && t.status !== "resolved" ? "current" : seen.has(s.dataset.step) ? "done" : "";
+      });
+      $("approval-notice").innerHTML = t.status === "awaiting_approval"
+        ? '<div class="notice">The policy engine paused this run for human approval. Open the <a href="/approvals" target="_blank">reviewer queue</a> to approve, edit or reject; this page updates automatically.</div>'
+        : "";
+      const busy = t.status === "working";
+      $("send").disabled = busy;
+    }
+
+    async function poll() {
+      if (ticketId) render(await api(`/api/tickets/${ticketId}`));
+      const approvals = await api("/api/approvals");
+      const n = approvals.filter((a) => a.status === "pending").length;
+      $("pending-count").textContent = n ? `(${n})` : "";
+    }
+
+    $("form").onsubmit = async (e) => {
+      e.preventDefault();
+      const text = $("text").value.trim();
+      if (!text) return;
+      $("send").disabled = true;
+      const r = await api("/api/tickets", { method: "POST", body: JSON.stringify({ email: $("customer").value, text }) });
+      if (r.ticketId) ticketId = r.ticketId;
+      $("text").value = "";
+      poll();
+    };
+    $("customer").onchange = () => {
+      ticketId = null;
+      $("chat").innerHTML = "";
+      $("trace").innerHTML = '<div class="empty">Send a message to watch the agent work.</div>';
+      $("status").textContent = "idle"; $("status").className = "status";
+      document.querySelectorAll("#steps span").forEach((s) => (s.className = ""));
+      $("approval-notice").innerHTML = "";
+      renderExamples();
+    };
+    $("reset").onclick = async () => {
+      await api("/api/reset", { method: "POST" });
+      $("customer").onchange();
+      loadCustomers();
+    };
+
+    loadCustomers();
+    timer = setInterval(poll, 1000);
+  </script>
+</body>
+</html>

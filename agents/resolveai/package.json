@@ -1,0 +1,26 @@
+{
+  "name": "resolveai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ResolveAI: a tool-using customer support agent with a policy engine and human-in-the-loop approval",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "cli": "tsx src/cli.ts",
+    "web": "tsx src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
