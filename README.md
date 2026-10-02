@@ -21,9 +21,11 @@ Each project page includes:
 ## Structure
 
 ```
-index.html                  Home: hero, Projects section, approach, contact
+index.html                  Home: hero, Projects, Writing, approach, contact
 projects/research-agent.html
 projects/support-agent.html
+articles/guardrails-in-code.html        Technical article
+articles/parallel-research-agents.html  Technical article
 assets/css/style.css        Shared styles (light/dark theme)
 assets/js/main.js           Theme toggle, TOC highlighting, diagram links, trace replay
 ```
@@ -39,7 +41,7 @@ python3 -m http.server 8000
 
 ## Deploying
 
-`.github/workflows/pages.yml` deploys the site to GitHub Pages on every push to `main`. One-time setup: Settings → Pages → Source: **GitHub Actions**.
+Published with GitHub Pages from the `main` branch (Settings → Pages → Deploy from a branch → `main`, root). Every push to `main` updates the site; no build step or workflow is needed.
 
 ## Adding a new agentic application
 

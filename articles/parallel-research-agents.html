@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parallel Research Agents</title>
+  <meta name="description" content="How splitting a question across parallel sub-agents, and adding a separate critic, makes research reports faster and better grounded.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="container nav">
+      <a class="brand" href="../index.html">srinjan<span>.</span>ghosh</a>
+      <ul class="nav-links">
+        <li><a href="../index.html#projects">Projects</a></li>
+        <li><a href="../index.html#writing">Writing</a></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">☾</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="article">
+      <div class="breadcrumb"><a href="../index.html#writing">Writing</a> / Parallel research agents</div>
+      <div class="article-meta"><span>Multi-agent systems</span><span>·</span><span>10 min read</span></div>
+      <h1>Fan out, then fact-check: building a parallel research agent</h1>
+      <p class="lead">
+        A single agent with a search tool can answer simple questions. Ask it something broad and it runs out
+        of context, wanders, and cites things it never read. These are the design choices that fixed that in
+        DeepScout.
+      </p>
+
+      <h2>Where a single agent breaks down</h2>
+      <p>
+        The obvious design is one agent in a loop: search, read, search again, then write. It's a good starting
+        point and I'd still use it for narrow questions. On broad ones, three problems show up:
+      </p>
+      <ul>
+        <li><strong>Context fills up.</strong> Ten fetched pages can be 80k tokens. By the time the agent writes, the early sources are buried or trimmed.</li>
+        <li><strong>It's sequential.</strong> Each search waits on the last, so a deep question takes many minutes.</li>
+        <li><strong>Topics bleed together.</strong> Notes about cost end up next to notes about safety, and the model starts mixing up which source said what.</li>
+      </ul>
+
+      <h2>Decompose into independent sub-questions</h2>
+      <p>
+        DeepScout's lead agent starts by writing a plan: 3–6 sub-questions that together cover the brief. The key
+        word in the planner prompt is <strong>independent</strong>. Each sub-question must be answerable without
+        knowing the answer to any other. That's what makes it safe to run them at the same time.
+      </p>
+      <p>
+        The planner also sets a budget: how many searches each sub-agent may run. A quick question gets 3
+        sub-questions and about 5 searches each; a deep one gets 6 and about 15. Without explicit budgets, agents
+        tend either to stop after one search or to keep going far past the point of new information.
+      </p>
+
+      <h2>Give each sub-agent a clean context</h2>
+      <p>
+        Each sub-question goes to its own searcher sub-agent with a fresh context window containing only that
+        sub-question, a few starting queries and its tools. The searchers run concurrently:
+      </p>
+      <pre><code>results = await asyncio.gather(
+    *(run_searcher(sq, budget) for sq in plan.sub_questions),
+    return_exceptions=True,   # one failed searcher shouldn't sink the run
+)</code></pre>
+      <p>
+        This one change does most of the work. Wall-clock time drops roughly in proportion to the number of
+        searchers. Each searcher stays focused on one topic. And the lead agent never sees the raw pages, only
+        each searcher's condensed findings, so its own context stays small enough to reason over everything at once.
+      </p>
+      <p>
+        A practical detail: searchers can run on a smaller, faster model than the lead. Their job (search, skim,
+        summarize one topic) is narrow, and there are many of them, so this is where most of the cost saving is.
+      </p>
+
+      <h2>Turn findings into evidence, not notes</h2>
+      <p>
+        Free-text summaries are hard to check. So before writing anything, the lead converts findings into
+        <strong>evidence records</strong>: one claim, the exact quote that supports it, and the source it came from.
+        Two sources making the same claim are merged into one record with higher support. Two sources disagreeing
+        are flagged as a conflict instead of being quietly resolved.
+      </p>
+      <p>
+        The writer is then given one hard rule: every factual sentence must cite an evidence ID, and if there's no
+        evidence, the sentence is either dropped or marked as a gap. That rule moves the hallucination problem from
+        "did the model make this up?" to "does this quote support this sentence?", which is a much easier
+        question to check.
+      </p>
+
+      <h2>A critic that didn't write the draft</h2>
+      <p>
+        Asking a model to review its own draft in the same conversation mostly produces approval. It has already
+        committed to the reasoning. DeepScout uses a <strong>separate critic agent</strong> with a fresh context and
+        an adversarial prompt. It checks four things:
+      </p>
+      <ol>
+        <li><strong>Grounding:</strong> does each cited quote actually support its sentence?</li>
+        <li><strong>Coverage:</strong> is every item in the original brief answered?</li>
+        <li><strong>Balance:</strong> are conflicting sources represented fairly?</li>
+        <li><strong>Freshness:</strong> are time-sensitive claims backed by recent sources?</li>
+      </ol>
+      <p>
+        If anything fails, the critic returns specific gaps, and those become new sub-questions for another round
+        of searchers. This is the loop that turns a plausible draft into a grounded one.
+      </p>
+
+      <h2>Always bound the loop</h2>
+      <p>
+        A critic will almost always find <em>something</em>. Left unbounded, the loop keeps going while cost climbs
+        and quality barely changes. DeepScout allows at most two revision rounds. If gaps remain after that,
+        they're not hidden: they go into a <em>Limitations</em> section of the report. A report that says "I couldn't
+        find reliable data on X" is more useful than one that fills the gap with a guess.
+      </p>
+
+      <h2>What I'd tell someone building one</h2>
+      <ul>
+        <li>Start with a single agent. Add parallel sub-agents only when context or latency actually becomes the problem.</li>
+        <li>Spend time on the planner prompt. Overlapping sub-questions waste searches; missing ones leave gaps the critic has to catch later.</li>
+        <li>Treat fetched web pages as data, never as instructions. Any page can contain text aimed at your agent.</li>
+        <li>Trace every step. When a report is wrong, you need to see which searcher read which page and which quote was misused.</li>
+        <li>Evaluate citation precision directly. It's the metric that best tracks whether people can trust the output.</li>
+      </ul>
+
+      <blockquote>Parallelism makes research agents fast. Evidence records and an independent critic make them trustworthy.</blockquote>
+
+      <p>
+        The full workflow, with an interactive diagram and an example run, is on the
+        <a href="../projects/research-agent.html">DeepScout project page</a>.
+      </p>
+
+      <div class="article-footer next-project">
+        <a class="btn" href="guardrails-in-code.html">← Guardrails belong in code</a>
+        <a class="btn btn-primary" href="../index.html#writing">All writing →</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>© <span data-year></span> Srinjan Ghosh</span>
+      <span><a href="../index.html#writing">All writing</a></span>
+    </div>
+  </footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

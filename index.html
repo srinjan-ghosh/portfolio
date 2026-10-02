@@ -16,6 +16,7 @@
       <a class="brand" href="index.html">srinjan<span>.</span>ghosh</a>
       <ul class="nav-links">
         <li><a href="#projects">Projects</a></li>
+        <li><a href="#writing">Writing</a></li>
         <li class="hide-sm"><a href="#approach">Approach</a></li>
         <li class="hide-sm"><a href="#contact">Contact</a></li>
         <li><button class="theme-toggle" aria-label="Toggle dark mode">☾</button></li>
@@ -94,7 +95,31 @@
       </div>
     </section>
 
-    <section id="approach">
+    <section id="writing">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">Writing</div>
+          <h2>Technical articles</h2>
+          <p class="muted">Longer write-ups on the design decisions behind my agents: what worked, what didn't, and why.</p>
+        </div>
+        <div class="article-list">
+          <a class="card article-card" href="articles/guardrails-in-code.html">
+            <div class="article-meta"><span>Agent safety</span><span>·</span><span>8 min read</span></div>
+            <h3>Guardrails belong in code, not in the prompt</h3>
+            <p>Why a support agent that can issue refunds needs a deterministic policy engine between the model and every write action, and how to design the human-approval handoff.</p>
+            <span class="more">Read article →</span>
+          </a>
+          <a class="card article-card" href="articles/parallel-research-agents.html">
+            <div class="article-meta"><span>Multi-agent systems</span><span>·</span><span>10 min read</span></div>
+            <h3>Fan out, then fact-check: building a parallel research agent</h3>
+            <p>How splitting a question across sub-agents with fresh context windows, and adding a separate critic, makes research reports faster and better grounded.</p>
+            <span class="more">Read article →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="approach" style="border-top: 1px solid var(--border);">
       <div class="container">
         <div class="section-head">
           <div class="eyebrow">Approach</div>

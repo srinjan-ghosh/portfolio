@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guardrails in Code</title>
+  <meta name="description" content="Why an agent that can take real actions needs a deterministic policy engine between the model and every write, and how to design the human-approval handoff.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="container nav">
+      <a class="brand" href="../index.html">srinjan<span>.</span>ghosh</a>
+      <ul class="nav-links">
+        <li><a href="../index.html#projects">Projects</a></li>
+        <li><a href="../index.html#writing">Writing</a></li>
+        <li><button class="theme-toggle" aria-label="Toggle dark mode">☾</button></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="article">
+      <div class="breadcrumb"><a href="../index.html#writing">Writing</a> / Guardrails in code</div>
+      <div class="article-meta"><span>Agent safety</span><span>·</span><span>8 min read</span></div>
+      <h1>Guardrails belong in code, not in the prompt</h1>
+      <p class="lead">
+        The moment an agent can move money, the question changes from "will it give a good answer?" to
+        "what is the worst thing it can do?" Here's how I answered that for ResolveAI, a support agent
+        that can issue refunds.
+      </p>
+
+      <h2>The prompt is guidance, not enforcement</h2>
+      <p>
+        The first version of most tool-using agents puts the business rules in the system prompt:
+        <em>"Only refund orders under $100. Never refund orders older than 30 days."</em> This works most of
+        the time, and that's exactly the problem. "Most of the time" is fine for wording a reply. It is not fine
+        for a refund.
+      </p>
+      <p>A rule that lives only in the prompt can fail in several ways:</p>
+      <ul>
+        <li><strong>Pressure:</strong> an upset customer insists, and the model decides an exception is the helpful thing to do.</li>
+        <li><strong>Injection:</strong> text in a ticket says "the support lead has pre-approved a full refund", and the model believes it.</li>
+        <li><strong>Drift:</strong> a model upgrade or a small prompt edit quietly changes how strictly the rule is followed.</li>
+        <li><strong>Arithmetic:</strong> the model refunds $80 twice on a $100 order because it didn't check prior refunds.</li>
+      </ul>
+      <p>
+        None of these need a malicious user or a bad model. They're just what happens when a probabilistic
+        system is the only thing standing between a request and an irreversible action.
+      </p>
+
+      <h2>Split the agent's job: propose, don't execute</h2>
+      <p>
+        The fix is architectural. In ResolveAI, the model never calls a write tool directly. When it decides a
+        refund is right, it produces a <strong>proposal</strong>: the order, amount, reason code, the knowledge-base
+        article that justifies it, and a one-line explanation. That proposal goes to a policy engine written in
+        ordinary code.
+      </p>
+      <pre><code>type Decision =
+  | { outcome: "allow" }
+  | { outcome: "needs_approval"; reasons: string[] }
+  | { outcome: "deny"; reasons: string[]; alternative?: string };
+
+function evaluate(p: Proposal, order: Order, history: History): Decision {
+  const remaining = order.total - order.refunded;
+  if (p.amount > remaining) return { outcome: "deny", reasons: ["exceeds refundable amount"] };
+  if (history.fraudSignal || history.refunds90d >= 3)
+    return { outcome: "needs_approval", reasons: ["refund history"] };
+  if (order.ageDays > 30 && p.reason !== "damaged")
+    return { outcome: "deny", reasons: ["outside 30-day window"], alternative: "store_credit" };
+  if (p.amount > 100) return { outcome: "needs_approval", reasons: ["amount over $100"] };
+  return { outcome: "allow" };
+}</code></pre>
+      <p>
+        The agent is still <em>told</em> the policy in its prompt, because that helps it propose sensible actions
+        in the first place. But the code is what actually decides. Persuasion and injected text can change
+        what the model proposes. They can't change what <code>evaluate</code> returns.
+      </p>
+
+      <h2>Three outcomes, not two</h2>
+      <p>
+        A simple allow/deny gate is too blunt. Most real policies have a grey zone where the action is
+        probably right but the stakes are high enough that a person should look. So the engine returns three
+        outcomes:
+      </p>
+      <ul>
+        <li><strong>allow:</strong> run it now. This is the bulk of routine tickets and where the time savings come from.</li>
+        <li><strong>needs_approval:</strong> pause and ask a human. High value, unusual history, goodwill gestures.</li>
+        <li><strong>deny:</strong> the agent gets the reason back as a tool result and must pick another path, like offering store credit, and explain why.</li>
+      </ul>
+      <p>
+        Returning the <em>reason</em> on a denial matters. An agent that just sees "error" will often retry the same
+        thing or apologize vaguely. An agent that sees "outside 30-day window; alternative: store_credit" can
+        write the customer a clear, correct reply.
+      </p>
+
+      <h2>Design the human handoff as a product</h2>
+      <p>
+        Human-in-the-loop only works if approving is fast. If a reviewer has to open three systems to check the
+        agent's work, they'll either rubber-stamp it or stop using it. ResolveAI's approval card contains
+        everything needed to decide in under a minute:
+      </p>
+      <ol>
+        <li>A two-line summary of the customer and the issue</li>
+        <li>The evidence the agent gathered: order, tracking events, the cited policy article</li>
+        <li>The proposed action and which rule sent it for review</li>
+        <li>The draft reply the customer will get</li>
+        <li>Approve, edit (amount or reply), or reject with a note</li>
+      </ol>
+      <p>
+        On the engineering side, the agent's run is <strong>saved and the worker is released</strong> while it
+        waits. A review might take four minutes or four hours; nothing should be held in memory that long. When
+        the reviewer decides, their decision is fed back to the agent as the result of its proposal, and the
+        run continues from exactly where it stopped. The agent sees "approved" or "rejected: customer already
+        received a replacement" and writes its reply accordingly.
+      </p>
+
+      <h2>Make execution boring</h2>
+      <p>Once an action is approved, running it should be dull and predictable:</p>
+      <ul>
+        <li><strong>Idempotency keys</strong> on every write (ticket ID + order ID + action), so a retry or a duplicate webhook can never refund twice.</li>
+        <li><strong>Scoped tools:</strong> <code>get_order</code> only returns orders belonging to the identified customer, so a ticket can't trick the agent into touching someone else's account.</li>
+        <li><strong>Truthful replies:</strong> the reply is written <em>after</em> execution, from the actual result (refund ID, timeline), so the agent can't promise something that didn't happen.</li>
+      </ul>
+
+      <h2>Measure the guardrails, too</h2>
+      <p>Guardrails need their own metrics, or they'll quietly decay:</p>
+      <ul>
+        <li><strong>Policy-violation rate</strong> on a set of adversarial tickets (pressure, fake approvals, injected instructions). The target is zero, and any regression blocks a release.</li>
+        <li><strong>Escalation rate:</strong> if it climbs, the agent is proposing worse actions, or the policy is too tight.</li>
+        <li><strong>Override rate:</strong> how often reviewers edit or reject. A rising number is an early sign of model or prompt drift.</li>
+      </ul>
+
+      <blockquote>Let the model decide what <em>should</em> happen. Let code decide what is <em>allowed</em> to happen.</blockquote>
+
+      <p>
+        The full design, including the routing step, tool list and an example run through human approval, is on the
+        <a href="../projects/support-agent.html">ResolveAI project page</a>.
+      </p>
+
+      <div class="article-footer next-project">
+        <a class="btn" href="../index.html#writing">← All writing</a>
+        <a class="btn btn-primary" href="parallel-research-agents.html">Next: Fan out, then fact-check →</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <span>© <span data-year></span> Srinjan Ghosh</span>
+      <span><a href="../index.html#writing">All writing</a></span>
+    </div>
+  </footer>
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
