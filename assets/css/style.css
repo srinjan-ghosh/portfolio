@@ -430,3 +430,23 @@ td code { white-space: nowrap; }
   html { scroll-behavior: auto; }
   * { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Writing ---------- */
+.article-list { display: grid; gap: 1rem; }
+.article-card { display: flex; flex-direction: column; gap: .5rem; color: var(--text); transition: border-color .15s; }
+.article-card:hover { border-color: var(--accent); text-decoration: none; }
+.article-card h3 { margin: 0; font-size: 1.25rem; }
+.article-card p { margin: 0; color: var(--text-muted); }
+.article-card .more { font-weight: 600; color: var(--accent); }
+.article-meta { display: flex; gap: .5rem; font-size: .8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+.article { max-width: 720px; margin: 0 auto; padding: 56px 0 72px; }
+.article h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); }
+.article .lead { font-size: 1.15rem; color: var(--text-muted); }
+.article h2 { font-size: 1.45rem; margin-top: 2.5rem; }
+.article p, .article li { font-size: 1.05rem; }
+.article ul, .article ol { padding-left: 1.3rem; margin: 0 0 1em; }
+.article li { margin-bottom: .4rem; }
+.article blockquote { margin: 1.5rem 0; padding: .2rem 0 .2rem 1.2rem; border-left: 3px solid var(--accent); color: var(--text-muted); font-style: italic; }
+.article .article-meta { margin-bottom: 1rem; }
+.article-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }

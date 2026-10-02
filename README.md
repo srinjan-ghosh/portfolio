@@ -21,9 +21,11 @@ Each project page includes:
 ## Structure
 
 ```
-index.html                  Home: hero, Projects section, approach, contact
+index.html                  Home: hero, Projects, Writing, approach, contact
 projects/research-agent.html
 projects/support-agent.html
+articles/guardrails-in-code.html        Technical article
+articles/parallel-research-agents.html  Technical article
 assets/css/style.css        Shared styles (light/dark theme)
 assets/js/main.js           Theme toggle, TOC highlighting, diagram links, trace replay
 ```
